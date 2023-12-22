@@ -17,7 +17,6 @@ class CharLevelDataset(Dataset):
         return vocab
 
     def line_to_tensor(self, line):
-        print("test", line)
         indices = [self.vocab[char] for char in line]
         if self.seq_len is not None:
             padded_indices = indices[:self.seq_len] + [self.pad_index] * max(0, self.seq_len - len(indices))
@@ -34,4 +33,7 @@ class CharLevelDataset(Dataset):
         target_tensor = self.line_to_tensor(line[1:] + [self.pad_token])  # Shift by one for next character prediction
         return input_tensor, target_tensor
 
-
+def create_char_level_dataloader(data, batch_size=1, seq_len=100):
+    dataset = CharLevelDataset(data, seq_len=seq_len)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return dataloader
