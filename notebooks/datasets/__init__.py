@@ -1,2 +1,2 @@
-from datasets.char_level_dataset import CharLevelDataset, create_char_level_dataloader
-from datasets.utility import load_dataset
+from .char_level_dataset import CharLevelDataset, create_char_level_dataloader
+from .utility import load_dataset

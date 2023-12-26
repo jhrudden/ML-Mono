@@ -1,1 +1,1 @@
-from .simple_rnn import SimpleRNN
+from .simple_rnn import SimpleRNN, LanguageModelSRNN
