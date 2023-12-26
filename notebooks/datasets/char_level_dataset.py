@@ -2,38 +2,45 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
-class CharLevelDataset(Dataset):
-    def __init__(self, lines, pad_token='<PAD>', seq_len=None):
-        self.lines = [list(line) for line in lines]
-        self.seq_len = seq_len
-        self.pad_token = pad_token
-        self.vocab = self.build_vocab(lines, pad_token)
-        self.pad_index = self.vocab[pad_token]
+PAD_TOKEN = '<PAD>'
 
-    def build_vocab(self, lines, pad_token):
+class CharLevelDataset(Dataset):
+    def __init__(self, corpus, seq_len=None):
+        self.seq_len = seq_len
+        # TODO: figure out how to use this pad token
+        self.vocab = self.build_vocab(corpus)
+        self.data = self.process_data(corpus)
+        
+    def build_vocab(self, lines):
         unique_chars = set(''.join(lines))
         vocab = {char: i for i, char in enumerate(sorted(unique_chars), start=1)}  # start=1 to reserve 0 for padding
-        vocab[pad_token] = 0  # Pad token
+        vocab[PAD_TOKEN] = 0  # Pad token
         return vocab
-
-    def line_to_tensor(self, line):
-        indices = [self.vocab[char] for char in line]
-        if self.seq_len is not None:
-            padded_indices = indices[:self.seq_len] + [self.pad_index] * max(0, self.seq_len - len(indices))
-        else:
-            padded_indices = indices
-        return torch.tensor(padded_indices, dtype=torch.long)
+    
+    def process_data(self, corpus):
+        return torch.tensor([self.vocab[char] for char in corpus], dtype=torch.long)
 
     def __len__(self):
-        return len(self.lines)
+        return max(len(self.data) - self.seq_len, 0)
 
     def __getitem__(self, idx):
-        line = self.lines[idx]
-        input_tensor = self.line_to_tensor(line)
-        target_tensor = self.line_to_tensor(line[1:] + [self.pad_token])  # Shift by one for next character prediction
-        return input_tensor, target_tensor
+        data_tensor = self.data[idx:idx+self.seq_len]
+        target_tensor = self.data[idx+1:idx+self.seq_len+1]
+        return data_tensor, target_tensor
 
 def create_char_level_dataloader(data, batch_size=1, seq_len=100):
+    """
+    Returns a torch.DataLoader to randomly sample batches of data
+    
+    Args:
+        data: corpus of text data as a string
+        batch_size: int
+        seq_len: int
+    
+    Returns:
+        dataloader: torch.DataLoader
+        vocab_size: int
+    """
     dataset = CharLevelDataset(data, seq_len=seq_len)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    return dataloader
+    return dataloader, len(dataset.vocab) + 1  # +1 for padding token
