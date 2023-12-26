@@ -12,32 +12,48 @@ class SimpleRNN(nn.Module):
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
-        self.U = nn.Parameter(torch.randn(hidden_dim, hidden_dim))
-        self.W = nn.Parameter(torch.randn(hidden_dim, input_dim))
-        self.V = nn.Parameter(torch.randn(output_dim, hidden_dim))
+        self.U = nn.Parameter(torch.zeros(hidden_dim, hidden_dim))
+        self.W = nn.Parameter(torch.zeros(hidden_dim, input_dim))
+        self.V = nn.Parameter(torch.zeros(output_dim, hidden_dim))
+
         self.reset_hidden_state()
-
-
     
-    def step(self, X):
-        if X.dim == 1:
-            X = X.view(1, -1)
-        print(f'hidden state size: ', self.hidden_state.size())
+    def step(self, X, verbose=False):
+        if X.dim() == 1:
+            X = X.unsqueeze(0)
+        
+        batch_size = X.size(0)
+
+        if self.hidden_state.size(1) != batch_size:
+            self.reset_hidden_state(batch_size)
+        
+        if verbose:
+            print(f'X size: ', X.size())
+            print(f'U size: ', self.U.size())
+            print(f'W size: ', self.W.size())
+            print(f'V size: ', self.V.size())
+            print(f'hidden state size: ', self.hidden_state.size())
+
+
         # calculate contribution from previous hidden state
-        hidden_contribution = self.U @ self.hidden_state
-        input_contribution = self.W @ X.T
+        hidden_contribution = torch.matmul(self.U, self.hidden_state)
+        input_contribution = torch.matmul(self.W, X.T)
+ 
         hidden_input = hidden_contribution + input_contribution
-        print(f'sizes of hidden_contribution, input_contribution, hidden_input: ', hidden_contribution.size(), input_contribution.size(), hidden_input.size())
 
         # calculate new hidden state
         self.hidden_state = torch.tanh(hidden_input)
 
         # calculate output
-        logits = self.V @ self.hidden_state
+        logits = torch.matmul(self.V, self.hidden_state)
+
         return logits.T # transpose to match batch size
 
-    def reset_hidden_state(self):
-        self.hidden_state = torch.zeros((self.hidden_dim, 1))
+    def reset_hidden_state(self, batch_size: int = 1):
+        self.hidden_state = torch.zeros((self.hidden_dim, batch_size))
+    
+    def backward(self, X, y):
+        raise NotImplementedError('Backward pass through time not implemented for SimpleRNN')
 
 class LanguageModelSRNN(nn.Module):
     """
@@ -46,23 +62,34 @@ class LanguageModelSRNN(nn.Module):
     def __init__(self, vocab_size: int, seq_len: int, hidden_dim: int):
         super(LanguageModelSRNN, self).__init__()
         self.rnn = SimpleRNN(vocab_size, hidden_dim, vocab_size)
+
+        
+    def embedding(self, x):
+        """
+        Embedding layer for the model.
+        :param x: input tensor of shape (batch_size, seq_len)
+        :return: output tensor of shape (batch_size, seq_len, vocab_size)
+        """
+        return torch.nn.functional.one_hot(x, num_classes=self.rnn.input_dim).float()
     
-    def forward(self, x):
+    def forward(self, X):
         """
         Forward pass of the model.
         :param x: input tensor of shape (batch_size, seq_len)
         :return: output tensor of shape (batch_size, seq_len, vocab_size)
         """
         # one hot encode input
-        x = self.embedding(x)
+        X_embedding = self.embedding(X) # (batch_size, seq_len, vocab_size)
+        B, S, V = X_embedding.size()
         outputs = []
         self.rnn.reset_hidden_state()
-        for i in range(x.shape[1]):
-            logits = self.rnn.step(embedding[:, i, :])
+        for t in range(S):
+            x_t = X_embedding[:, t, :]
+            logits = self.rnn.step(x_t)
             softmaxed = torch.softmax(logits, dim=1)
             outputs.append(softmaxed)
-        
-        return torch.stack(outputs, dim=1)
+        out_tensor = torch.stack(outputs, dim=1)
+        return out_tensor
     
     @torch.no_grad()
     def generate(self, context, seq_len: int, num_samples: int = 1):
@@ -77,18 +104,13 @@ class LanguageModelSRNN(nn.Module):
             current_context = context[:min(seq_len, len(context))]
             current_context = self.embedding(current_context.view(1, -1))
             for char in current_context[0]:
-                logits = self.rnn.step(char.T)
+                # make char a batch of size 2
+                char = char.unsqueeze(0)
+                logits = self.rnn.step(char)
             softmaxed = torch.softmax(logits, dim=1)
             next_char = torch.multinomial(softmaxed, num_samples=1).view(-1)
             context = torch.cat([context, next_char], dim=0)
         self.train()
-        return context.T.detach().tolist()
-    
-    def embedding(self, x):
-        """
-        Embedding layer for the model.
-        :param x: input tensor of shape (batch_size, seq_len)
-        :return: output tensor of shape (batch_size, seq_len, vocab_size)
-        """
-        return torch.nn.functional.one_hot(x, num_classes=self.rnn.input_dim).float()
+        return context.detach().tolist()
+
         
