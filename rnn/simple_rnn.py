@@ -16,6 +16,10 @@ class SimpleRNN(nn.Module):
         self.W = nn.Parameter(torch.zeros(hidden_dim, input_dim))
         self.V = nn.Parameter(torch.zeros(output_dim, hidden_dim))
 
+        nn.init.xavier_uniform_(self.U)
+        nn.init.xavier_uniform_(self.W)
+        nn.init.xavier_uniform_(self.V)
+
         self.reset_hidden_state()
     
     def step(self, X, verbose=False):
@@ -51,9 +55,6 @@ class SimpleRNN(nn.Module):
 
     def reset_hidden_state(self, batch_size: int = 1):
         self.hidden_state = torch.zeros((self.hidden_dim, batch_size))
-    
-    def backward(self, X, y):
-        raise NotImplementedError('Backward pass through time not implemented for SimpleRNN')
 
 class LanguageModelSRNN(nn.Module):
     """
@@ -62,7 +63,6 @@ class LanguageModelSRNN(nn.Module):
     def __init__(self, vocab_size: int, seq_len: int, hidden_dim: int):
         super(LanguageModelSRNN, self).__init__()
         self.rnn = SimpleRNN(vocab_size, hidden_dim, vocab_size)
-
         
     def embedding(self, x):
         """
