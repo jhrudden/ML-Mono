@@ -1,2 +1,2 @@
 from .char_level_dataset import CharLevelDataset, create_char_level_dataloader
-from .utility import load_dataset
+from .utility import load_dataset, prepare_sequence_contexts, num_learnable_params
