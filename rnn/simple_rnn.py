@@ -74,20 +74,30 @@ class LanguageModelSRNN(nn.Module):
     """
     Language model implemented with a simple RNN.
     """
-    def __init__(self, vocab_size: int, seq_len: int, hidden_dim: int):
+    def __init__(self, vocab_size: int, seq_len: int, hidden_dim: int, use_embedding: bool = False, embedding_dim: int = None):
         super(LanguageModelSRNN, self).__init__()
         self.rnn = SimpleRNN(vocab_size, hidden_dim, vocab_size)
         self.linear = nn.Linear(hidden_dim, vocab_size)
         
-    # TODO: figure out if we want to use this or nn.Embedding
-    # Maybe use flag `use_dense_embeddings` to switch between the two
-    def embedding(self, x):
+        self.use_embedding = use_embedding
+        self.embedding_dim = embedding_dim if use_embedding else vocab_size
+
+        if use_embedding:
+            assert embedding_dim is not None, f'embedding_dim must be specified if use_embedding is True'
+            self.embedding_dim = embedding_dim
+            self.embedding_layer = nn.Embedding(vocab_size, embedding_dim)
+        
+    def embedding(self, X):
         """
-        Embedding layer for the model.
-        :param x: input tensor of shape (batch_size, seq_len)
-        :return: output tensor of shape (batch_size, seq_len, vocab_size)
+        Returns the embedding of the input. If use_embedding is False, returns a one hot encoding of the input.
+
+        :param X: input tensor of shape (batch_size, seq_len)
+        :return: embedding tensor of shape (batch_size, seq_len, embedding_dim)
         """
-        return torch.nn.functional.one_hot(x, num_classes=self.rnn.input_dim).float()
+        if self.use_embedding:
+            return self.embedding_layer(X)
+        else:
+            return torch.nn.functional.one_hot(X, num_classes=self.embedding_dim).float()
     
     def forward(self, X):
         """
