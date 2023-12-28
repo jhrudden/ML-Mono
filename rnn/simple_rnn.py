@@ -101,7 +101,7 @@ class LanguageModelSRNN(nn.Module):
         self.eval()
         self.rnn.reset_hidden_state()
         for i in range(num_samples):
-            current_context = context[:min(seq_len, len(context))]
+            current_context = context[-min(seq_len, len(context)):]
             current_context = self.embedding(current_context.view(1, -1))
             for char in current_context[0]:
                 # make char a batch of size 2
