@@ -30,10 +30,10 @@ class SimpleRNN(nn.Module):
         """
         # double check X and h dimensions
         assert X.dim() == 3, f'X dim: {X.dim()}'
-        assert h.dim() == 2, f'h dim: {h.dim()}'
-        assert X.size(0) == h.size(0), f'X size: {X.size()}, h size: {h.size()}'
+        assert h_0.dim() == 2, f'h dim: {h_0.dim()}'
+        assert X.size(0) == h_0.size(0), f'X size: {X.size()}, h size: {h_0.size()}'
         assert X.size(2) == self.input_dim, f'X size: {X.size()}, input_dim: {self.input_dim}'
-        assert h.size(1) == self.hidden_dim, f'h size: {h.size()}, hidden_dim: {self.hidden_dim}'
+        assert h_0.size(1) == self.hidden_dim, f'h size: {h_0.size()}, hidden_dim: {self.hidden_dim}'
 
         out_tensor = torch.zeros((X.size(0), X.size(1), self.hidden_dim))
         h = h_0
@@ -100,15 +100,16 @@ class LanguageModelSRNN(nn.Module):
         B, S, V = X_embedding.size()
         outputs = torch.zeros((B, S, V))
         h_0 = torch.zeros((B, self.rnn.hidden_dim))
-        logits, h = self.rnn(X_embedding, h_0)
+        logits, _ = self.rnn(X_embedding, h_0)
 
         # A little sad to have to re loop through the sequence
         for t in range(S):
-            h_t = h[:, t, :]
+            h_t = logits[:, t, :]
             logits_t = self.linear(h_t)
             softmaxed = torch.softmax(logits_t, dim=1)
             outputs[:, t, :] = softmaxed
-        return out_tensor
+
+        return outputs
     
     @torch.no_grad()
     def generate(self, context, seq_len: int, num_samples: int = 1):
@@ -122,14 +123,13 @@ class LanguageModelSRNN(nn.Module):
         for i in range(num_samples):
             current_context = context[-min(seq_len, len(context)):]
             current_context = self.embedding(current_context.view(1, -1))
-            print("new context size: ", current_context.size())
-            assert False, 'stop here'
             _, h = self.rnn(current_context, h)
             logits = self.linear(h)
             softmaxed = torch.softmax(logits, dim=1)
             next_char = torch.multinomial(softmaxed, num_samples=1).view(-1)
             context = torch.cat([context, next_char], dim=0)
+        resultant_sequence = context.detach().tolist()
         self.train()
-        return context.detach().tolist()
+        return resultant_sequence
 
         
