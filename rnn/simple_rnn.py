@@ -20,7 +20,7 @@ class SimpleRNN(nn.Module):
         nn.init.xavier_uniform_(self.W)
 
     
-    def forward(self, X, h_0):
+    def forward(self, X, h_0: torch.Tensor = None):
         """
         Forward pass of the model.
         :param X: input tensor of shape (batch_size, seq_len, input_dim)
@@ -30,11 +30,15 @@ class SimpleRNN(nn.Module):
         """
         # double check X and h dimensions
         assert X.dim() == 3, f'X dim: {X.dim()}'
-        assert h_0.dim() == 2, f'h dim: {h_0.dim()}'
-        assert X.size(0) == h_0.size(0), f'X size: {X.size()}, h size: {h_0.size()}'
         assert X.size(2) == self.input_dim, f'X size: {X.size()}, input_dim: {self.input_dim}'
-        assert h_0.size(1) == self.hidden_dim, f'h size: {h_0.size()}, hidden_dim: {self.hidden_dim}'
 
+        if h_0 is None:
+            h_0 = torch.zeros((X.size(0), self.hidden_dim))
+        else:
+            assert h_0.dim() == 2, f'h dim: {h_0.dim()}'
+            assert X.size(0) == h_0.size(0), f'X size: {X.size()}, h size: {h_0.size()}'
+            assert h_0.size(1) == self.hidden_dim, f'h size: {h_0.size()}, hidden_dim: {self.hidden_dim}'
+        
         out_tensor = torch.zeros((X.size(0), X.size(1), self.hidden_dim))
         h = h_0
         for t in range(X.size(1)):
@@ -109,8 +113,7 @@ class LanguageModelSRNN(nn.Module):
         X_embedding = self.embedding(X) # (batch_size, seq_len, vocab_size)
         B, S, V = X_embedding.size()
         outputs = torch.zeros((B, S, V))
-        h_0 = torch.zeros((B, self.rnn.hidden_dim))
-        logits, _ = self.rnn(X_embedding, h_0)
+        logits, _ = self.rnn(X_embedding)
 
         # A little sad to have to re loop through the sequence
         for t in range(S):
@@ -129,11 +132,10 @@ class LanguageModelSRNN(nn.Module):
         :return: a sequence of text
         """
         self.eval()
-        h = torch.zeros((1, self.rnn.hidden_dim))
         for i in range(num_samples):
             current_context = context[-min(seq_len, len(context)):]
             current_context = self.embedding(current_context.view(1, -1))
-            _, h = self.rnn(current_context, h)
+            _, h = self.rnn(current_context)
             logits = self.linear(h)
             softmaxed = torch.softmax(logits, dim=1)
             next_char = torch.multinomial(softmaxed, num_samples=1).view(-1)
