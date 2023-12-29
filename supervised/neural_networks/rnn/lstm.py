@@ -3,6 +3,7 @@
 # Jurafsky, D., & Martin, J.H. (2022). "RNNs and LSTMs." In Speech and Language Processing (3rd ed.). 
 # Retrieved from https://web.stanford.edu/~jurafsky/slp3/
 
+import torch
 from torch import nn
 
 class LSTM(nn.Module):
