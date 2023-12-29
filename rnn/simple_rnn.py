@@ -1,7 +1,7 @@
-# Simple Recurrent Neural Network Implementation
-# Reference (conceptual)):
-# Jurafsky, D., & Martin, J.H. (2022). "Recurrent Neural Networks." In Speech and Language Processing (3rd ed.). 
-# Retrieved from https://web.stanford.edu/~jurafsky/slp3/9.pdf
+# Simple Recurrent Neural Network Implementation in PyTorch
+# Reference (conceptual):
+# Jurafsky, D., & Martin, J.H. (2022). "RNNs and LSTMs." In Speech and Language Processing (3rd ed.). 
+# Retrieved from https://web.stanford.edu/~jurafsky/slp3/
 
 import torch
 from torch import nn
