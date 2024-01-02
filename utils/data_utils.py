@@ -2,6 +2,10 @@ import tensorflow_datasets as tfds
 import torch
 import numpy as np
 
+import sys
+sys.path.append('..')
+from unsupervised.clustering import KMeans
+
 def load_tf_dataset(dataset_name: str, split_name: str = 'train', text_key: str = 'text'):
     """
     Load lines from a specified TensorFlow dataset and split.
@@ -81,3 +85,35 @@ def generate_regression_dataset(num_samples, degree, noise, x_range=(0, 1), seed
     y = np.dot(X, w) + noise
 
     return X[:,1].reshape(-1, 1), y, degree
+
+def generate_dataset_for_classification(n_samples, n_features, n_classes, center_box: tuple = (-10.0, 10.0), random_state: int = 42):
+    """
+    Generate a dataset for classification task by generating points from a Gaussian distribution around a random centeroids. Samples
+    are then assigned to the nearest centeroid using KMeans to reduce the variance of each class.
+
+    Parameters:
+        n_samples (int): number of samples to generate
+        n_features (int): number of features
+        n_classes (int): number of classes
+        center_box (tuple): range of centeroid values
+        random_state (int): random seed
+    
+    Returns:
+        X (np.ndarray): feature matrix
+        y (np.ndarray): target vector (each sample's class label)
+    """
+    np.random.seed(random_state)
+    centers = np.random.uniform(low=center_box[0], high=center_box[1], size=(n_classes, n_features))
+    X = np.zeros((n_samples, n_features))
+    y = np.zeros((n_samples, 1))
+    for i in range(n_samples):
+        center = np.random.choice(n_classes)
+        sample = np.random.normal(loc=centers[center], scale=1.0)
+        X[i, :] = sample
+    
+    # TODO implement own version of Kmeans
+    kmeans = KMeans(n_clusters=n_classes)
+    kmeans.fit(X)
+    y = kmeans._labels
+    return X, y
+    
