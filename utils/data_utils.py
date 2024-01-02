@@ -1,5 +1,6 @@
 import tensorflow_datasets as tfds
 import torch
+import numpy as np
 
 def load_tf_dataset(dataset_name: str, split_name: str = 'train', text_key: str = 'text'):
     """
@@ -46,3 +47,37 @@ def expand_sequence_for_rnn_training(data, labels, vocab_size: int, seq_len: int
     for i in range(seq_len):
         contexts.append(data[:, :i + 1])
     return contexts, embedded_labels
+
+def generate_regression_dataset(num_samples, degree, noise, x_range=(0, 1), seed=42):
+    """
+    Generate a dataset with a polynomial relationship between a single feature and target. 
+    
+    Parameters:
+        num_samples (int): number of samples to generate
+        degree (int): degree of polynomial
+        noise (float): standard deviation of gaussian noise
+        x_range (tuple): range of x values
+        seed (int): random seed
+    Returns:
+        X (num_samples, 1): feature vector for unscaled x value
+        y (np.ndarray): target vector
+        degree (int): degree of polynomial
+    """
+    assert degree > 0, "degree must be greater than 0"
+    np.random.seed(seed)
+
+    # generate random weights
+    w = np.random.uniform(-1, 1, degree+1)
+
+    X = np.random.uniform(x_range[0], x_range[1], (num_samples, 1))
+    
+    for i in range(2, degree+1):
+        X = np.hstack((X, np.power(X[:,0], i).reshape(-1, 1)))
+    
+    X = np.hstack((np.ones((num_samples, 1)), X)) # add bias term
+
+    noise = np.random.normal(0, noise, num_samples)
+
+    y = np.dot(X, w) + noise
+
+    return X[:,1].reshape(-1, 1), y, degree
