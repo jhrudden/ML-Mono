@@ -31,6 +31,14 @@ Currently implemented metrics for model evaluation:
 
 -   **Accuracy**: For evaluating classification models. See `metrics/classification_metrics.py`.
 
+### Notebooks
+
+Jupyter notebooks demonstrating the implementation and usage of various algorithms:
+
+-   **Linear Regression Example**: `notebooks/LinRegression_Example.ipynb`.
+-   **Logistic Regression Example**: `notebooks/LogRegression_Example.ipynb`.
+-   **Training RNNs to Generate Content Inspired by Shakespeare**: `notebooks/RNN_Shakespeare_Training.ipynb`.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
