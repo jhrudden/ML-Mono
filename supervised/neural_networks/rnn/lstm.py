@@ -5,15 +5,16 @@
 
 import torch
 from torch import nn
+from .base_rnn import BaseRNN
 
-class LSTM(nn.Module):
+class LSTM(BaseRNN):
     def __init__(self, input_dim, hidden_dim, output_dim):
         """
         :param input_dim: input dimensionality
         :param hidden_dim: hidden dimensionality
         :param output_dim: output dimensionality
         """
-        super(LSTM, self).__init__()
+        super(LSTM, self).__init__(input_dim, hidden_dim)
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
@@ -57,13 +58,10 @@ class LSTM(nn.Module):
         :param c: cell state representing remembered information collected from previous timestep.
                   tensor of shape (batch_size, hidden_dim)
         """
-        # TODO: verify dimensionnality of X, h, c
+        # verify dimensionnality of X, h using _check_dimensions_step from base_rnn.py
+        self._check_dimensions_step(X, h)
 
-        if h is None:
-            h = torch.zeros((X.size(0), self.hidden_dim))
-        else:
-            pass # TODO: verify dimensionnality of h
-
+        # still need to check dimensionality of c
         if c is None:
             c = torch.zeros((X.size(0), self.hidden_dim))
         else:

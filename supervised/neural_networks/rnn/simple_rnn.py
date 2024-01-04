@@ -5,12 +5,11 @@
 
 import torch
 from torch import nn
+from .base_rnn import BaseRNN
 
-class SimpleRNN(nn.Module):
+class SimpleRNN(BaseRNN):
     def __init__(self, input_dim: int, hidden_dim: int, output_dim: int):
-        super(SimpleRNN, self).__init__()
-        self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
+        super(SimpleRNN, self).__init__(input_dim, hidden_dim)
         self.output_dim = output_dim
         self.U = nn.Parameter(torch.zeros(hidden_dim, hidden_dim))
         self.W = nn.Parameter(torch.zeros(hidden_dim, input_dim))
@@ -27,16 +26,9 @@ class SimpleRNN(nn.Module):
         :return: output tensor of shape (batch_size, seq_len, hidden_dim)
                  final hidden state tensor of shape (batch_size, hidden_dim)
         """
-        # double check X and h dimensions
-        assert X.dim() == 3, f'X dim: {X.dim()}'
-        assert X.size(2) == self.input_dim, f'X size: {X.size()}, input_dim: {self.input_dim}'
-
-        if h_0 is None:
-            h_0 = torch.zeros((X.size(0), self.hidden_dim))
-        else:
-            assert h_0.dim() == 2, f'h dim: {h_0.dim()}'
-            assert X.size(0) == h_0.size(0), f'X size: {X.size()}, h size: {h_0.size()}'
-            assert h_0.size(1) == self.hidden_dim, f'h size: {h_0.size()}, hidden_dim: {self.hidden_dim}'
+        # double check X dimensions
+        self._check_dimensions_forward(X)
+        h_0 = self._initialize_hidden_state(X, h_0)
         
         out_tensor = torch.zeros((X.size(0), X.size(1), self.hidden_dim))
         h = h_0
@@ -55,11 +47,7 @@ class SimpleRNN(nn.Module):
         :return: output tensor of shape (batch_size, hidden_dim)
         """
         # double check X and h dimensions
-        assert X.dim() == 2, f'X dim: {X.dim()}'
-        assert h_n_minus_1.dim() == 2, f'h_n_minus_1 dim: {h_n_minus_1.dim()}'
-        assert X.size(0) == h_n_minus_1.size(0), f'X size: {X.size()}, h_n_minus_1 size: {h_n_minus_1.size()}'
-        assert X.size(1) == self.input_dim, f'X size: {X.size()}, input_dim: {self.input_dim}'
-        assert h_n_minus_1.size(1) == self.hidden_dim, f'h_n_minus_1 size: {h_n_minus_1.size()}, hidden_dim: {self.hidden_dim}'
+        self._check_dimensions_step(X, h_n_minus_1)
 
         # calculate contribution from previous hidden state
         hidden_contribution = torch.matmul(self.U, h_n_minus_1.T)
