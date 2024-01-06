@@ -51,7 +51,7 @@ class Hierarchical:
             old_clusters: indices of the clusters that were merged
         """
         for i in clusters:
-            if i in old_clusters:
+            if i in old_clusters or i == new_cluster:
                 continue
             dist = self._calculate_distance(clusters[new_cluster], clusters[i])
             distances.put((dist, i, new_cluster))
@@ -73,11 +73,12 @@ class Hierarchical:
                 continue
             
             new_cluster = clusters[i] + clusters[j]
-            new_cluster_idx = len(clusters)
+            new_cluster_idx = max(clusters.keys()) + 1
             clusters[new_cluster_idx] = new_cluster
             del clusters[i], clusters[j]
 
             self._update_distances(distances, clusters, new_cluster_idx, [i, j])
+
         
         return clusters
     
@@ -93,7 +94,7 @@ class Hierarchical:
         # side effect of _perform_clustering is that returned cluster indices are not in order / contiguous
         # need to reindex the clusters
         cluster_key_map = {i: j for j, i in enumerate(un_normalized_clusters)}
-        self.clusters = {cluster_key_map[i]: [cluster_key_map[j] for j in un_normalized_clusters[i]] for i in un_normalized_clusters}
+        self.clusters = {cluster_key_map[i]: un_normalized_clusters[i] for i in un_normalized_clusters}
 
     
     def _calculate_distances_to_cluster(self, samples, cluster):
@@ -110,7 +111,7 @@ class Hierarchical:
             centroid = np.mean(self.X[cluster], axis=0)
 
             # calculate the distance from each sample in X_new to the centroid
-            dists = np.linalg.norm(X_new - centroid, axis=1)
+            dists = np.linalg.norm(samples - centroid, axis=1)
 
             return dists
         else:
@@ -130,6 +131,7 @@ class Hierarchical:
         for i, cluster in enumerate(self.clusters):
             dists[:, i] = self._calculate_distances_to_cluster(X_new, cluster)
         
+        print(dists)
         return np.argmin(dists, axis=1)
 
 
