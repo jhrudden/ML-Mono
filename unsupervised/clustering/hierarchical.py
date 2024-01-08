@@ -3,8 +3,8 @@ from queue import PriorityQueue
 
 class Hierarchical:
     def __init__(self, linkage='centroid'):
-        if linkage not in ['centroid']:
-            # TODO: add ward, single and complete linkage
+        if linkage not in ['centroid', 'ward']:
+            # TODO: add single and complete linkage
             raise ValueError('Invalid linkage method')
         self.linkage = linkage
         self.clusters = None
@@ -39,6 +39,14 @@ class Hierarchical:
             centroid_i = np.mean(self.X[cluster_i], axis=0)
             centroid_j = np.mean(self.X[cluster_j], axis=0)
             dist = np.linalg.norm(centroid_i - centroid_j)
+        elif self.linkage == 'ward':
+            a_union_b = self.X[np.concatenate((cluster_i, cluster_j))]
+            a = self.X[cluster_i]
+            b = self.X[cluster_j]
+            a_union_b_contrib = (a_union_b - np.mean(a_union_b, axis=0)) ** 2
+            a_contrib = (a - np.mean(a, axis=0)) ** 2
+            b_contrib = (b - np.mean(b, axis=0)) ** 2
+            dist = np.sum(a_union_b_contrib) - np.sum(a_contrib) - np.sum(b_contrib)
         return dist
     
     def _update_distances(self, distances, clusters, new_cluster, old_clusters):
@@ -112,8 +120,12 @@ class Hierarchical:
 
             # calculate the distance from each sample in X_new to the centroid
             dists = np.linalg.norm(samples - centroid, axis=1)
+            print(f'Cluster {cluster} dist shape', dists.shape)
 
             return dists
+        
+        elif self.linkage == 'ward':
+            raise UnimplementedError('Ward linkage not implemented for predicting')
         else:
             raise UnimplementedError('Only centroid linkage is implemented')
 
@@ -128,20 +140,8 @@ class Hierarchical:
         # need to calculate the distance between each sample and each cluster
         # create big matrix of distances
         dists = np.zeros((X_new.shape[0], len(self.clusters)))
-        for i, cluster in enumerate(self.clusters):
-            dists[:, i] = self._calculate_distances_to_cluster(X_new, cluster)
+        # TODO: this may not be order preserving
+        for cluster in self.clusters:
+            dists[:, cluster] = self._calculate_distances_to_cluster(X_new, cluster)
         
-        print(dists)
         return np.argmin(dists, axis=1)
-
-
-
-        
-
-
-
-        
-        
-
-
-
