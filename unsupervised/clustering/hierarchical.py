@@ -87,7 +87,6 @@ class Hierarchical:
 
             self._update_distances(distances, clusters, new_cluster_idx, [i, j])
 
-        
         return clusters
     
     def fit(self, X, k):
@@ -103,45 +102,20 @@ class Hierarchical:
         # need to reindex the clusters
         cluster_key_map = {i: j for j, i in enumerate(un_normalized_clusters)}
         self.clusters = {cluster_key_map[i]: un_normalized_clusters[i] for i in un_normalized_clusters}
-
     
-    def _calculate_distances_to_cluster(self, samples, cluster):
+    def fit_predict(self, X, k):
         """
-        Calculate the distance between a matrix of samples and a cluster
+        Fit the model to the data and predict the cluster labels
         Params:
-            samples: matrix of new samples
-            cluster: indices of the samples in the cluster
+            X: (n_samples, n_features) array
+            k: number of clusters
         Returns:
-            dists: distances between each sample in X_new and the cluster
+            labels: (n_samples,) array of cluster labels
         """
-        if self.linkage == 'centroid':
-            # calculate the centroid of the cluster
-            centroid = np.mean(self.X[cluster], axis=0)
-
-            # calculate the distance from each sample in X_new to the centroid
-            dists = np.linalg.norm(samples - centroid, axis=1)
-            print(f'Cluster {cluster} dist shape', dists.shape)
-
-            return dists
+        self.fit(X, k)
+        labels = np.zeros(X.shape[0])
+        for i, cluster in enumerate(self.clusters):
+            sample_indices = self.clusters[cluster]
+            labels[sample_indices] = i
         
-        elif self.linkage == 'ward':
-            raise UnimplementedError('Ward linkage not implemented for predicting')
-        else:
-            raise UnimplementedError('Only centroid linkage is implemented')
-
-    def predict(self, X_new):
-        """
-        Predict the cluster for each sample
-        Params:
-            X_new: (n_samples, n_features) array
-        Returns:
-            y_pred: (n_samples,) array
-        """
-        # need to calculate the distance between each sample and each cluster
-        # create big matrix of distances
-        dists = np.zeros((X_new.shape[0], len(self.clusters)))
-        # TODO: this may not be order preserving
-        for cluster in self.clusters:
-            dists[:, cluster] = self._calculate_distances_to_cluster(X_new, cluster)
-        
-        return np.argmin(dists, axis=1)
+        return labels
