@@ -36,6 +36,10 @@ class KMeans:
         
     def predict(self, X):
         return np.argmin(np.linalg.norm(X[:, None] - self.centroids, axis=2), axis=1)
+    
+    def fit_predict(self, X):
+        self.fit(X)
+        return self.labels
         
 
         

@@ -113,7 +113,6 @@ def generate_dataset_for_classification(n_samples, n_features, n_classes, center
     
     # TODO implement own version of Kmeans
     kmeans = KMeans(n_clusters=n_classes)
-    kmeans.fit(X)
-    y = kmeans._labels
+    y = kmeans.fit_predict(X)
     return X, y
     
