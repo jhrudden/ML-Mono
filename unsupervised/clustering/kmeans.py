@@ -39,7 +39,7 @@ class KMeans:
     
     def fit_predict(self, X):
         self.fit(X)
-        return self.labels
+        return self._labels
         
 
         
