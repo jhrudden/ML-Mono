@@ -1,6 +1,7 @@
 import tensorflow_datasets as tfds
 import torch
 import numpy as np
+from typing import Tuple
 
 import sys
 sys.path.append('..')
@@ -115,4 +116,43 @@ def generate_dataset_for_classification(n_samples, n_features, n_classes, center
     kmeans = KMeans(n_clusters=n_classes)
     y = kmeans.fit_predict(X)
     return X, y
+
+def make_circles_2d(n_samples: int, noise: float = 0.1, factor: float = 0.5, random_state: int = 0) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate 2D data points arranged in two concentric circles.
+
+    Parameters:
+    n_samples (int): Total number of samples to generate.
+    noise (float): Standard deviation of Gaussian noise added to the data.
+    factor (float): Scale factor between the sizes of the two circles.
+    random_state (int): Seed for the random number generator.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray]: A tuple containing the generated points (X) and their corresponding labels (y).
+    """
+
+    if n_samples <= 0:
+        raise ValueError("n_samples must be a positive integer")
+    if noise < 0 or factor < 0:
+        raise ValueError("noise and factor must be non-negative numbers")
+
+    np.random.seed(random_state)
+
+    num_outer_samples = int(n_samples / 2)
+    num_inner_samples = n_samples - num_outer_samples
+
+    outer_lin = np.linspace(0, 2 * np.pi, num_outer_samples)
+    inner_lin = np.linspace(0, 2 * np.pi, num_inner_samples)
+
+    outer_x = np.cos(outer_lin) + np.random.normal(scale=noise, size=num_outer_samples)
+    outer_y = np.sin(outer_lin) + np.random.normal(scale=noise, size=num_outer_samples)
+
+    inner_x = np.cos(inner_lin) * factor + np.random.normal(scale=noise, size=num_inner_samples)
+    inner_y = np.sin(inner_lin) * factor + np.random.normal(scale=noise, size=num_inner_samples)
+
+    X = np.vstack((np.hstack((outer_x, inner_x)), np.hstack((outer_y, inner_y)))).T
+    y = np.hstack((np.zeros(num_outer_samples), np.ones(num_inner_samples)))
+
+    return X, y
+
     
