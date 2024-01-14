@@ -156,3 +156,38 @@ def make_circles_2d(n_samples: int, noise: float = 0.1, factor: float = 0.5, ran
     return X, y
 
     
+def make_moons_2d(n_samples: int, noise: float, random_state: int = 0) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Generate 2D data points arranged in two interleaving half circles.
+
+    Parameters:
+    n_samples (int): Total number of samples to generate.
+    noise (float): Standard deviation of Gaussian noise added to the data.
+    random_state (int): Seed for the random number generator.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray]: A tuple containing the generated points (X) and their corresponding labels (y).
+    """
+
+    if n_samples <= 0:
+        raise ValueError("n_samples must be a positive integer")
+    if noise < 0:
+        raise ValueError("noise must be a non-negative number")
+
+    np.random.seed(random_state)
+
+    num_top_samples = int(n_samples / 2)
+    num_bot_samples = n_samples - num_top_samples
+
+    top_circ_x = np.cos(np.linspace(0, np.pi, num_top_samples))
+    top_circ_y = np.sin(np.linspace(0, np.pi, num_top_samples))
+
+    bot_circ_x = 1 - np.cos(np.linspace(0, np.pi, num_bot_samples))
+    bot_circ_y = 1 - np.sin(np.linspace(0, np.pi, num_bot_samples)) - .5
+
+    X = np.vstack((np.hstack((top_circ_x, bot_circ_x)), np.hstack((top_circ_y, bot_circ_y)))).T
+    y = np.hstack((np.zeros(num_top_samples), np.ones(num_bot_samples)))
+
+    if noise > 0:
+        X += np.random.normal(scale=noise, size=(n_samples, 2))
+    return X, y
