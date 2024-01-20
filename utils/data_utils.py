@@ -191,3 +191,19 @@ def make_moons_2d(n_samples: int, noise: float, random_state: int = 0) -> Tuple[
     if noise > 0:
         X += np.random.normal(scale=noise, size=(n_samples, 2))
     return X, y
+
+def generate_uniform_noise(n_samples, n_features, random_state=42):
+    """
+    Generate a dataset with uniform noise.
+
+    Parameters:
+    n_samples (int): Number of samples to generate.
+    n_features (int): Number of features for each sample.
+    random_state (int): Seed for the random number generator.
+
+    Returns:
+    Tuple[np.ndarray, None]: Dataset with uniform noise. No labels :( cause why would you label noise?
+    """
+    rng = np.random.RandomState(random_state)
+    data = rng.rand(n_samples, n_features)
+    return data
