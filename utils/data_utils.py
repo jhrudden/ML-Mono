@@ -1,7 +1,7 @@
 import tensorflow_datasets as tfds
 import torch
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Union, List
 
 import sys
 sys.path.append('..')
@@ -207,3 +207,41 @@ def generate_uniform_noise(n_samples, n_features, random_state=42):
     rng = np.random.RandomState(random_state)
     data = rng.rand(n_samples, n_features)
     return data
+
+def make_blobs(n_samples:int, n_features:int = 2, centers:int = 3, cluster_std:Union[float, List[float]] = 1.0, random_state:int = 42):
+    """
+    Generate isotropic Gaussian blobs for clustering.
+
+    Parameters:
+    n_samples (int): Total number of samples to generate.
+    n_features (int): Number of features for each sample.
+    centers (int): Number of clusters to generate.
+    cluster_std (float or list of floats): Standard deviation of the clusters.
+    random_state (int): Seed for the random number generator.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray]: A tuple containing the generated points (X) and their corresponding labels (y).
+    """
+    if isinstance(cluster_std, float):
+        cluster_std = [cluster_std] * centers
+    elif isinstance(cluster_std, list):
+        if len(cluster_std) != centers:
+            raise ValueError("cluster_std must be a float or a list of floats with length equal to centers")
+    else:
+        raise ValueError("cluster_std must be a float or a list of floats with length equal to centers")
+
+    if n_samples <= 0:
+        raise ValueError("n_samples must be a positive integer")
+    if n_features <= 0:
+        raise ValueError("n_features must be a positive integer")
+    
+    if n_samples < centers:
+        raise ValueError("n_samples must be greater than or equal to centers")
+    
+    np.random.seed(random_state)
+
+
+
+    
+
+    
