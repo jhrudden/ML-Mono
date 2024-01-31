@@ -1,3 +1,3 @@
 from .kmeans import KMeans
 from .hierarchical import Hierarchical
-from .gmm import GMM
+from .gmm import GaussianMixture

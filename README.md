@@ -39,6 +39,10 @@ Jupyter notebooks demonstrating the implementation and usage of various algorith
 -   **Logistic Regression Example**: `notebooks/LogRegression_Example.ipynb`.
 -   **Training RNNs to Generate Content Inspired by Shakespeare**: `notebooks/RNN_Shakespeare_Training.ipynb`.
 
+#### TODO:
+
+1. Add mixin for Unsupervised & Supervised Models to implement `fit_predict`, `fit`, `predict` methods + `X`, `y` fields.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

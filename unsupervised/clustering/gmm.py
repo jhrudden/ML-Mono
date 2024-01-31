@@ -1,9 +1,10 @@
 # trying EM
 from scipy.stats import multivariate_normal
+import numpy as np
 
 class GaussianMixture:
-    def __init__(self, num_components=2, max_iter=100):
-        self.num_components = num_components
+    def __init__(self, n_components=2, max_iter=100):
+        self.n_components = n_components
         self.max_iter = max_iter
         self.weight_matrix = None
         self.phis = None
@@ -12,21 +13,21 @@ class GaussianMixture:
 
     def _init(self, X):
         n_samples, n_features = X.shape
-        self.phis = np.ones(self.num_components) / self.num_components
-        self.weight_matrix = np.ones((n_samples, self.num_components)) / self.num_components
-        self.means = np.random.choice(X.flatten(), size=(self.num_components, n_features))
-        self.covs = np.array([np.cov(X, rowvar=False) for _ in range(self.num_components)])
+        self.phis = np.ones(self.n_components) / self.n_components
+        self.weight_matrix = np.ones((n_samples, self.n_components)) / self.n_components
+        self.means = np.random.choice(X.flatten(), size=(self.n_components, n_features))
+        self.covs = np.array([np.cov(X, rowvar=False) for _ in range(self.n_components)])
 
     def _e_step(self, X):
         n_samples = X.shape[0]
-        responsibilities = np.zeros((n_samples, self.num_components))
-        for i in range(self.num_components):
+        responsibilities = np.zeros((n_samples, self.n_components))
+        for i in range(self.n_components):
             responsibilities[:, i] = multivariate_normal.pdf(X, mean=self.means[i], cov=self.covs[i])
         sum_responsibilities = responsibilities.dot(self.phis)
         return responsibilities / sum_responsibilities[:, np.newaxis]
 
     def _m_step(self, X):
-        for i in range(self.num_components):
+        for i in range(self.n_components):
             weights = self.weight_matrix[:, i]
             total_weight = weights.sum()
             self.means[i] = np.sum(X * weights[:, np.newaxis], axis=0) / total_weight
@@ -49,7 +50,7 @@ class GaussianMixture:
         Returns:
             labels: (n_samples,) array of cluster labels
         """
-        self.weight_matrix = self.e_step(X)
+        self.weight_matrix = self._e_step(X)
         return np.argmax(self.weight_matrix, axis=1)
     
     def fit_predict(self, X):
@@ -66,6 +67,6 @@ class GaussianMixture:
     def pdf(self, X):
         """Calculate the probability density function for each sample in X."""
         pdf_values = np.zeros(X.shape[0])
-        for i in range(self.num_components):
+        for i in range(self.n_components):
             pdf_values += self.phis[i] * multivariate_normal.pdf(X, mean=self.means[i], cov=self.covs[i])
         return pdf_values
