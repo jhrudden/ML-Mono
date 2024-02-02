@@ -208,7 +208,7 @@ def generate_uniform_noise(n_samples, n_features, random_state=42):
     data = rng.rand(n_samples, n_features)
     return data
 
-def make_blobs(n_samples:int, n_features:int = 2, centers:int = 3, cluster_std:Union[float, List[float]] = 1.0, random_state:int = 42):
+def make_blobs(n_samples:int, n_features:int = 2, centers:Union[float, List[List[float]]] = 3, cluster_std:Union[float, List[float]] = 1.0, bounding_box:Tuple[float, float] = (10,-10), random_state:int = 42):
     """
     Generate isotropic Gaussian blobs for clustering.
 
@@ -217,16 +217,28 @@ def make_blobs(n_samples:int, n_features:int = 2, centers:int = 3, cluster_std:U
     n_features (int): Number of features for each sample.
     centers (int): Number of clusters to generate.
     cluster_std (float or list of floats): Standard deviation of the clusters.
+    bounding_box (tuple): Range of values for the centers of the clusters.
     random_state (int): Seed for the random number generator.
 
     Returns:
     Tuple[np.ndarray, np.ndarray]: A tuple containing the generated points (X) and their corresponding labels (y).
     """
+    n_centers = centers
+    if isinstance(centers, int):
+        if centers <= 0:
+            raise ValueError("centers must be a positive integer")
+        centers = np.random.uniform(low=bounding_box[1], high=bounding_box[0], size=(n_centers, n_features))
+    elif isinstance(centers, list):
+        n_centers = len(centers)
+    else:
+        raise ValueError("centers must be a positive integer or a list coordinates of the centers of the clusters.")
+
     if isinstance(cluster_std, float):
-        cluster_std = [cluster_std] * centers
+        cluster_std = [cluster_std] * n_centers
     elif isinstance(cluster_std, list):
-        if len(cluster_std) != centers:
+        if len(cluster_std) != n_centers:
             raise ValueError("cluster_std must be a float or a list of floats with length equal to centers")
+        n_centers = len(cluster_std)
     else:
         raise ValueError("cluster_std must be a float or a list of floats with length equal to centers")
 
@@ -235,10 +247,24 @@ def make_blobs(n_samples:int, n_features:int = 2, centers:int = 3, cluster_std:U
     if n_features <= 0:
         raise ValueError("n_features must be a positive integer")
     
-    if n_samples < centers:
+    if n_samples < n_centers:
         raise ValueError("n_samples must be greater than or equal to centers")
     
     np.random.seed(random_state)
+
+    samples_per_cluster = n_samples // n_centers
+    X = np.zeros((n_samples, n_features))
+    y = np.zeros(n_samples)
+    for i, center in enumerate(centers):
+        start = i * samples_per_cluster
+        end = (i + 1) * samples_per_cluster
+        if i == n_centers - 1:
+            end = n_samples
+        X[start:end] = np.random.normal(loc=center, scale=cluster_std[i], size=(end-start, n_features))
+        y[start:end] = i
+    
+    return X, y
+
 
 
 
