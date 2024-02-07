@@ -2,13 +2,14 @@ import numpy as np
 from queue import PriorityQueue
 
 class Hierarchical:
-    def __init__(self, linkage='centroid'):
+    def __init__(self, linkage='centroid', n_clusters=2):
         if linkage not in ['centroid', 'ward']:
             # TODO: add single and complete linkage
             raise ValueError('Invalid linkage method')
         self.linkage = linkage
         self.clusters = None
         self.X = None
+        self.n_clusters = n_clusters
 
     def _calc_initial_distances(self):
         """
@@ -64,7 +65,7 @@ class Hierarchical:
             dist = self._calculate_distance(clusters[new_cluster], clusters[i])
             distances.put((dist, i, new_cluster))
 
-    def _perform_clustering(self, k):
+    def _perform_clustering(self):
         """
         Perform the clustering
         Params:
@@ -74,7 +75,7 @@ class Hierarchical:
         distances = self._calc_initial_distances()
 
         clusters = {i: [i] for i in range(self.X.shape[0])}
-        while len(clusters) > k:
+        while len(clusters) > self.n_clusters:
             dist, i, j = distances.get()
             
             if i not in clusters or j not in clusters:
@@ -89,7 +90,7 @@ class Hierarchical:
 
         return clusters
     
-    def fit(self, X, k):
+    def fit(self, X):
         """
         Fit the model to the data
         Params:
@@ -97,13 +98,13 @@ class Hierarchical:
             k: number of clusters
         """
         self.X = X
-        un_normalized_clusters = self._perform_clustering(k)
+        un_normalized_clusters = self._perform_clustering()
         # side effect of _perform_clustering is that returned cluster indices are not in order / contiguous
         # need to reindex the clusters
         cluster_key_map = {i: j for j, i in enumerate(un_normalized_clusters)}
         self.clusters = {cluster_key_map[i]: un_normalized_clusters[i] for i in un_normalized_clusters}
     
-    def fit_predict(self, X, k):
+    def fit_predict(self, X):
         """
         Fit the model to the data and predict the cluster labels
         Params:
@@ -112,7 +113,7 @@ class Hierarchical:
         Returns:
             labels: (n_samples,) array of cluster labels
         """
-        self.fit(X, k)
+        self.fit(X)
         labels = np.zeros(X.shape[0])
         for i, cluster in enumerate(self.clusters):
             sample_indices = self.clusters[cluster]
