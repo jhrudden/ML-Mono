@@ -12,6 +12,12 @@ class GaussianMixture:
         self.covs = None
 
     def _init(self, X):
+        """
+        Given some data X, initialize the parameters of the model.
+        
+        Params:
+            X: (n_samples, n_features) array
+        """
         n_samples, n_features = X.shape
         self.phis = np.ones(self.n_components) / self.n_components
         self.weight_matrix = np.ones((n_samples, self.n_components)) / self.n_components
@@ -19,6 +25,14 @@ class GaussianMixture:
         self.covs = np.array([np.cov(X, rowvar=False) for _ in range(self.n_components)])
 
     def _e_step(self, X):
+        """
+        Perform the E-step of the EM algorithm. 
+        This step calculates the responsibilities for each sample. Responsibilities
+        represent the probability that each sample belongs to each cluster.
+
+        Params:
+            X: (n_samples, n_features) array
+        """
         n_samples = X.shape[0]
         responsibilities = np.zeros((n_samples, self.n_components))
         for i in range(self.n_components):
@@ -27,6 +41,14 @@ class GaussianMixture:
         return responsibilities / sum_responsibilities[:, np.newaxis]
 
     def _m_step(self, X):
+        """
+        Perform the M-step of the EM algorithm.
+        This step updates the parameters of the model to maximize the likelihood of the data based on the
+        responsibilities calculated in the E-step.
+
+        Params:
+            X: (n_samples, n_features) array
+        """
         for i in range(self.n_components):
             weights = self.weight_matrix[:, i]
             total_weight = weights.sum()
@@ -35,6 +57,13 @@ class GaussianMixture:
             self.covs[i] = np.dot(centered.T, centered * weights[:, np.newaxis]) / total_weight
 
     def fit(self, X):
+        """
+        Fit the model to the data. This method runs the EM algorithm to update the parameters
+        of the model to maximize the likelihood of the data.
+
+        Params:
+            X: (n_samples, n_features) array
+        """
         self._init(X)
         for _ in range(self.max_iter):
             self.weight_matrix = self._e_step(X)
