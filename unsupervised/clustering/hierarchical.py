@@ -1,15 +1,16 @@
 import numpy as np
 from queue import PriorityQueue
+from .base import BaseClusterMixin
 
-class Hierarchical:
+class Hierarchical(BaseClusterMixin):
     def __init__(self, linkage='centroid', n_clusters=2):
+        super().__init__(name="AgglomerativeClustering", n_clusters=n_clusters)
         if linkage not in ['centroid', 'ward']:
             # TODO: add single and complete linkage
             raise ValueError('Invalid linkage method')
         self.linkage = linkage
         self.clusters = None
         self.X = None
-        self.n_clusters = n_clusters
 
     def _calc_initial_distances(self):
         """
@@ -104,6 +105,7 @@ class Hierarchical:
         cluster_key_map = {i: j for j, i in enumerate(un_normalized_clusters)}
         self.clusters = {cluster_key_map[i]: un_normalized_clusters[i] for i in un_normalized_clusters}
     
+    # TODO: might need to refactor this to use the predict method from the base class
     def fit_predict(self, X):
         """
         Fit the model to the data and predict the cluster labels
