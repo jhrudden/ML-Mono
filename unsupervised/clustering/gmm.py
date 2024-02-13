@@ -4,8 +4,8 @@ import numpy as np
 from .base import BaseClusterMixin
 
 class GaussianMixture(BaseClusterMixin):
-    def __init__(self, n_clusters=2, max_iter=100):
-        super().__init__(n_clusters=n_clusters, max_iter=max_iter)
+    def __init__(self, n_clusters=2, max_iter=100, tol=1e-4):
+        super().__init__(name="GaussianMixture", n_clusters=n_clusters, max_iter=max_iter, tol=tol)
         self.weight_matrix = None
         self.phis = None
         self.means = None
